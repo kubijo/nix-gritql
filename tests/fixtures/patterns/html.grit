@@ -1,0 +1,6 @@
+language html
+
+contains tag_name() as $tag where {
+  $tag <: r`^div$`,
+  $tag => `section`
+}

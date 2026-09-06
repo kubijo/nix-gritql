@@ -1,0 +1,7 @@
+/* color: legacy */
+.note::after {
+    content: "color: legacy";
+}
+.real {
+    color: modern; /* keep this comment */
+}

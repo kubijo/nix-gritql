@@ -1,0 +1,3 @@
+language rust
+
+`legacy_rust($value)` => `modern_rust($value)`

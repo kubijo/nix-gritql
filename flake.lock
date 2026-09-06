@@ -1,0 +1,135 @@
+{
+  "nodes": {
+    "gritql-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1774843698,
+        "narHash": "sha256-/rftecZn0eH4tx07jJEf6ycEOrqpSAj+9st8c8+ySvU=",
+        "owner": "biomejs",
+        "repo": "gritql",
+        "rev": "dbe8faba29a3a7008805aa431534742070002933",
+        "type": "github"
+      },
+      "original": {
+        "owner": "biomejs",
+        "ref": "v0.0.3",
+        "repo": "gritql",
+        "type": "github"
+      }
+    },
+    "nix-tools": {
+      "inputs": {
+        "nixpkgs-pinned": "nixpkgs-pinned"
+      },
+      "locked": {
+        "lastModified": 1788453833,
+        "narHash": "sha256-mf0p+78CT1P73gGy0c6AXtuOG2W91+Bf4BX/LIb9tN4=",
+        "owner": "kubijo",
+        "repo": "nix-tools",
+        "rev": "213cea2835bbc90aab360876aacd8a5759d6fab7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "kubijo",
+        "ref": "v0.3.0",
+        "repo": "nix-tools",
+        "type": "github"
+      }
+    },
+    "nixpkgs-pinned": {
+      "locked": {
+        "lastModified": 1787364730,
+        "narHash": "sha256-NcYt9QJfpJiF1lAyN8BDPB4EeScbPU+EwQqPiBElrpU=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "a831408e6378bc02ebf8cc09b52c96ca86f6bab4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-pinned_2": {
+      "locked": {
+        "lastModified": 1788549839,
+        "narHash": "sha256-kOrCcSIA6w9J1hX5DqHy2k9pDTJymExTsbV74U9UtCA=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "17de0b976395537756f30a3e78f2f06e5cec89ed",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "gritql-src": "gritql-src",
+        "nix-tools": "nix-tools",
+        "nixpkgs-pinned": "nixpkgs-pinned_2",
+        "tree-sitter-facade-src": "tree-sitter-facade-src",
+        "tree-sitter-gritql-src": "tree-sitter-gritql-src",
+        "web-tree-sitter-src": "web-tree-sitter-src"
+      }
+    },
+    "tree-sitter-facade-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1712338157,
+        "narHash": "sha256-nFvQK1NYEIuIwYp1oqGWRM0l2kqdumLTEJADmaocEdw=",
+        "owner": "getgrit",
+        "repo": "tree-sitter-facade",
+        "rev": "a26c147cea7049a5d2c42006499371b346b52648",
+        "type": "github"
+      },
+      "original": {
+        "owner": "getgrit",
+        "repo": "tree-sitter-facade",
+        "rev": "a26c147cea7049a5d2c42006499371b346b52648",
+        "type": "github"
+      }
+    },
+    "tree-sitter-gritql-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1736264979,
+        "narHash": "sha256-nfEvwujjELM7l7MmN/HG4X/zQNZN67mezI1Hn9YxMgM=",
+        "owner": "getgrit",
+        "repo": "tree-sitter-gritql",
+        "rev": "f9d98660bd7ae78c9211cb52e295bcd6531a8121",
+        "type": "github"
+      },
+      "original": {
+        "owner": "getgrit",
+        "repo": "tree-sitter-gritql",
+        "rev": "f9d98660bd7ae78c9211cb52e295bcd6531a8121",
+        "type": "github"
+      }
+    },
+    "web-tree-sitter-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1684939404,
+        "narHash": "sha256-0HBMN6mSdkVc0XVIr3LvY3npPfFn/tKUuXczUUtwR88=",
+        "owner": "getgrit",
+        "repo": "web-tree-sitter",
+        "rev": "9a01e452ec7288851405722e13aca08d9d90b6b1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "getgrit",
+        "repo": "web-tree-sitter",
+        "rev": "9a01e452ec7288851405722e13aca08d9d90b6b1",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

@@ -1,0 +1,3 @@
+language toml
+
+`legacy = $value` => `modern = $value`

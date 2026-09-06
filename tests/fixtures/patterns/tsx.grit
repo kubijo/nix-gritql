@@ -1,0 +1,3 @@
+language js(jsx)
+
+`<LegacyBox>{$value}</LegacyBox>` => `<ModernBox>{$value}</ModernBox>`

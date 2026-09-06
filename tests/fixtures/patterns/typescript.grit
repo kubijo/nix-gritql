@@ -1,0 +1,3 @@
+language js(typescript)
+
+`legacyTs($value)` => `modernTs($value)`

@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "upstreamRelease": "v0.0.3",
+  "packagedLanguages": [
+    "css",
+    "json",
+    "solidity",
+    "yaml",
+    "hcl",
+    "javascript",
+    "typescript",
+    "tsx",
+    "html",
+    "java",
+    "kotlin",
+    "csharp",
+    "python",
+    "markdown",
+    "go",
+    "rust",
+    "ruby",
+    "elixir",
+    "sql",
+    "vue",
+    "toml",
+    "php"
+  ],
+  "languages": {
+    "toml": {
+      "extensions": [
+        "toml"
+      ],
+      "explicitLanguage": "toml",
+      "filenameDetection": true,
+      "structuralMatching": true,
+      "lintDiagnostics": true,
+      "rewrites": true,
+      "preservesUnrelatedText": true,
+      "note": "Configured checks detect .toml files; the generic from_extension helper omits TOML at this release."
+    },
+    "rust": {
+      "extensions": [
+        "rs"
+      ],
+      "explicitLanguage": "rust",
+      "filenameDetection": true,
+      "structuralMatching": true,
+      "lintDiagnostics": true,
+      "rewrites": true,
+      "preservesUnrelatedText": true
+    },
+    "javascript": {
+      "extensions": [
+        "js",
+        "cjs",
+        "mjs"
+      ],
+      "explicitLanguage": "js(js_do_not_use)",
+      "filenameDetection": true,
+      "structuralMatching": true,
+      "lintDiagnostics": true,
+      "rewrites": true,
+      "preservesUnrelatedText": true
+    },
+    "typescript": {
+      "extensions": [
+        "ts",
+        "cts",
+        "mts"
+      ],
+      "explicitLanguage": "js(typescript)",
+      "filenameDetection": true,
+      "structuralMatching": true,
+      "lintDiagnostics": true,
+      "rewrites": true,
+      "preservesUnrelatedText": true
+    },
+    "tsx": {
+      "extensions": [
+        "tsx"
+      ],
+      "explicitLanguage": "js(jsx)",
+      "filenameDetection": true,
+      "structuralMatching": true,
+      "lintDiagnostics": true,
+      "rewrites": true,
+      "preservesUnrelatedText": true
+    },
+    "html": {
+      "extensions": [
+        "html"
+      ],
+      "explicitLanguage": "html",
+      "filenameDetection": true,
+      "structuralMatching": true,
+      "lintDiagnostics": true,
+      "rewrites": true,
+      "preservesUnrelatedText": true
+    },
+    "css": {
+      "extensions": [
+        "css"
+      ],
+      "explicitLanguage": "css",
+      "filenameDetection": true,
+      "structuralMatching": true,
+      "lintDiagnostics": true,
+      "rewrites": true,
+      "preservesUnrelatedText": true
+    },
+    "json": {
+      "extensions": [
+        "json"
+      ],
+      "explicitLanguage": "json",
+      "filenameDetection": true,
+      "structuralMatching": true,
+      "lintDiagnostics": true,
+      "rewrites": true,
+      "preservesUnrelatedText": true
+    },
+    "yaml": {
+      "extensions": [
+        "yaml",
+        "yml"
+      ],
+      "explicitLanguage": "yaml",
+      "filenameDetection": true,
+      "structuralMatching": true,
+      "lintDiagnostics": true,
+      "rewrites": true,
+      "preservesUnrelatedText": true
+    }
+  }
+}

@@ -1,0 +1,4 @@
+# legacy: comment-only
+note: "legacy: string-only"
+# Keep this comment.
+legacy: 8
