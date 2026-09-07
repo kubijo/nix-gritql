@@ -5,6 +5,8 @@ API.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-07
+
 ### Fixed
 
 - Prevented configured arguments from bypassing checks or changing a profile's declared scope. `gritArgs` now accepts
