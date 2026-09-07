@@ -5,6 +5,8 @@ API.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-09-07
+
 ### Fixed
 
 - Made check and apply target discovery independent of global, parent, and checkout-private ignore files.
