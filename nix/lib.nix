@@ -12,9 +12,32 @@ let
     && !(lib.hasPrefix "/" value)
     && lib.all (part: part != "..") (lib.splitString "/" value);
 
-  rejected =
-    args: names:
-    lib.filter (arg: lib.any (name: arg == name || lib.hasPrefix "${name}=" arg) names) args;
+  validLogLevel = value: lib.isString value && value != "" && !(lib.hasPrefix "-" value);
+  safeGritArgs =
+    {
+      args,
+      switches ? [ ],
+    }:
+    let
+      validate =
+        remaining:
+        if remaining == [ ] then
+          true
+        else
+          let
+            argument = lib.head remaining;
+            rest = lib.tail remaining;
+          in
+          if lib.elem argument switches then
+            validate rest
+          else if argument == "--log-level" then
+            rest != [ ] && validLogLevel (lib.head rest) && validate (lib.tail rest)
+          else if lib.hasPrefix "--log-level=" argument then
+            validLogLevel (lib.removePrefix "--log-level=" argument) && validate rest
+          else
+            false;
+    in
+    lib.isList args && lib.all lib.isString args && validate args;
 
   runnable = package: {
     type = "app";
@@ -131,6 +154,11 @@ rec {
           ];
           runtimeEnv.GRIT_TELEMETRY_DISABLED = "true";
           text = ''
+            if (( $# != 0 )); then
+              echo "${name}: runtime arguments are not supported; configure gritArgs instead" >&2
+              exit 2
+            fi
+
             root=$PWD
             root_marker=${lib.escapeShellArg treeRootFile}
             while [[ ! -e "$root/$root_marker" ]]; do
@@ -246,20 +274,17 @@ rec {
       "warn"
       "error"
     ]) "level must be info, warn, or error";
-    assert lib.assertMsg (lib.all lib.isString (
-      commonArgs ++ checkArgs ++ applyArgs
-    )) "gritArgs values must be lists of strings";
-    assert lib.assertMsg (
-      rejected (commonArgs ++ checkArgs ++ applyArgs) [
-        "--fix"
-        "--grit-dir"
-        "--json"
-        "--jsonl"
-        "--level"
-        "--no-cache"
-        "--refresh-cache"
-      ] == [ ]
-    ) "gritArgs cannot override runner-owned safety arguments";
+    assert lib.assertMsg (safeGritArgs {
+      args = commonArgs;
+    }) "gritArgs.common accepts only --log-level VALUE or --log-level=VALUE";
+    assert lib.assertMsg (safeGritArgs {
+      args = checkArgs;
+      switches = [ "--verbose" ];
+    }) "gritArgs.check accepts only --verbose and --log-level";
+    assert lib.assertMsg (safeGritArgs {
+      args = applyArgs;
+      switches = [ "--verbose" ];
+    }) "gritArgs.apply accepts only --verbose and --log-level";
     {
       checks.grit = check;
       apps = {
@@ -289,7 +314,11 @@ rec {
         toolPkgs.writeShellApplication {
           inherit name;
           text = ''
-            exec ${lib.getExe package} "$@"
+            if (( $# != 0 )); then
+              echo "${name}: runtime arguments are not supported; configure gritArgs instead" >&2
+              exit 2
+            fi
+            exec ${lib.getExe package}
           '';
           meta = {
             license = lib.licenses.unlicense;

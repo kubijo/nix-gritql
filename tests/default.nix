@@ -23,10 +23,14 @@ let
         "src-two"
       ];
       exclude = [ "src-two/excluded.js" ];
-      gritArgs.common = [
-        "--log-level"
-        "info"
-      ];
+      gritArgs = {
+        common = [
+          "--log-level"
+          "info"
+        ];
+        check = [ "--verbose" ];
+        apply = [ "--verbose" ];
+      };
     };
   cleanProject = configure (fixtureRoot + "/clean");
   violationProject = configure (fixtureRoot + "/violation");
@@ -111,9 +115,9 @@ let
         paths = [ "codemods one/change.js" ];
         gritPackage = profileGrit;
         gritArgs = {
-          common = [ "--profile-common" ];
-          check = [ "--profile-check" ];
-          apply = [ "--profile-apply" ];
+          common = [ "--log-level=debug" ];
+          check = [ "--verbose" ];
+          apply = [ "--log-level=warn" ];
         };
         gate = false;
       };
@@ -190,6 +194,29 @@ let
       profiles.bad = "not an attribute set";
     }) true
   );
+  invalidArgs =
+    gritArgs:
+    builtins.tryEval (
+      builtins.deepSeq (api.configure {
+        inherit
+          gritArgs
+          patterns
+          system
+          ;
+        src = fixtureRoot + "/clean";
+        paths = [ "." ];
+      }) true
+    );
+  helpArgs = invalidArgs { common = [ "--help" ]; };
+  positionalArgs = invalidArgs { check = [ "../outside" ]; };
+  scopeReducingArgs = invalidArgs {
+    apply = [
+      "--only-in-json"
+      "[]"
+    ];
+  };
+  missingLogLevelValue = invalidArgs { common = [ "--log-level" ]; };
+  githubActionsArgs = invalidArgs { check = [ "--github-actions" ]; };
   legacyNames =
     builtins.attrNames singleFileProject.checks == [ "grit" ]
     &&
@@ -236,6 +263,11 @@ assert !sharedProfileOverride.success;
 assert !invalidGate.success;
 assert !emptyProfiles.success;
 assert !invalidProfileValue.success;
+assert !helpArgs.success;
+assert !positionalArgs.success;
+assert !scopeReducingArgs.success;
+assert !missingLogLevelValue.success;
+assert !githubActionsArgs.success;
 toolPkgs.runCommandLocal "grit-runner-tests"
   {
     nativeBuildInputs = with toolPkgs; [
@@ -313,6 +345,17 @@ toolPkgs.runCommandLocal "grit-runner-tests"
     chmod -R u+w "$work"
     before=$(find "$work" -type f -print0 | sort -z | xargs -0 sha256sum)
     cd "$work/codemods one"
+
+    set +e
+    ${lib.getExe profileProject.packages.grit-rename-js-apply} ../codemods\ two \
+      >"$TMPDIR/runtime-scope.out" 2>&1
+    status=$?
+    set -e
+    test "$status" -eq 2
+    grep -F 'runtime arguments are not supported' "$TMPDIR/runtime-scope.out" >/dev/null
+    after=$(find "$work" -type f -print0 | sort -z | xargs -0 sha256sum)
+    test "$before" = "$after"
+
     set +e
     ${lib.getExe profileProject.packages.grit-rename-js-check} \
       >"$TMPDIR/profile-preview.out" 2>&1
@@ -348,9 +391,9 @@ toolPkgs.runCommandLocal "grit-runner-tests"
     set -e
     test "$status" -eq 37
     test "$(cat "$TMPDIR/profile-exit.out")" = 'profile diagnostic'
-    grep -Fx -- '--profile-common' "$PROFILE_ARGS_MARKER" >/dev/null
-    grep -Fx -- '--profile-check' "$PROFILE_ARGS_MARKER" >/dev/null
-    ! grep -Fx -- '--profile-apply' "$PROFILE_ARGS_MARKER" >/dev/null
+    grep -Fx -- '--log-level=debug' "$PROFILE_ARGS_MARKER" >/dev/null
+    grep -Fx -- '--verbose' "$PROFILE_ARGS_MARKER" >/dev/null
+    ! grep -Fx -- '--log-level=warn' "$PROFILE_ARGS_MARKER" >/dev/null
     ! grep -Fx -- '--fix' "$PROFILE_ARGS_MARKER" >/dev/null
 
     set +e
@@ -361,10 +404,10 @@ toolPkgs.runCommandLocal "grit-runner-tests"
     set -e
     test "$status" -eq 41
     test "$(cat "$TMPDIR/profile-exit.out")" = 'profile diagnostic'
-    grep -Fx -- '--profile-common' "$PROFILE_ARGS_MARKER" >/dev/null
-    grep -Fx -- '--profile-apply' "$PROFILE_ARGS_MARKER" >/dev/null
+    grep -Fx -- '--log-level=debug' "$PROFILE_ARGS_MARKER" >/dev/null
+    grep -Fx -- '--log-level=warn' "$PROFILE_ARGS_MARKER" >/dev/null
     grep -Fx -- '--fix' "$PROFILE_ARGS_MARKER" >/dev/null
-    ! grep -Fx -- '--profile-check' "$PROFILE_ARGS_MARKER" >/dev/null
+    ! grep -Fx -- '--verbose' "$PROFILE_ARGS_MARKER" >/dev/null
 
     echo 'test: shared profile tool set'
     export FAKE_GRIT_MARKER="$TMPDIR/fake-grit"
@@ -382,6 +425,14 @@ toolPkgs.runCommandLocal "grit-runner-tests"
     chmod -R u+w "$work"
     before=$(find "$work" -type f -print0 | sort -z | xargs -0 sha256sum)
     cd "$work/src one"
+    set +e
+    ${lib.getExe violationProject.packages.grit-check} --help \
+      >"$TMPDIR/runtime-help.out" 2>&1
+    status=$?
+    set -e
+    test "$status" -eq 2
+    grep -F 'runtime arguments are not supported' "$TMPDIR/runtime-help.out" >/dev/null
+
     if ${lib.getExe violationProject.packages.grit-check} \
       >"$TMPDIR/check.out" 2>&1; then
       echo 'expected the violation check to fail' >&2

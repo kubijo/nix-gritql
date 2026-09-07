@@ -41,7 +41,9 @@ Configure a consumer flake:
 
 `patterns` accepts a `.grit` or Markdown file, or a directory. Existing `grit.yaml` and `grit.yml` files are honored;
 otherwise the runner discovers patterns and creates a store-backed Grit config. `paths` and `exclude` accept relative
-paths or globs. Extra arguments use `gritArgs.common`, `.check`, and `.apply` lists.
+paths or globs. Extra arguments use `gritArgs.common`, `.check`, and `.apply` lists. To preserve the configured scope
+and exit semantics, `common` accepts only `--log-level`; `check` and `apply` additionally accept `--verbose`. Generated
+apps and packages reject runtime arguments.
 
 `project.checks.grit` validates an immutable source copy. `nix run .#grit-check` checks the working tree;
 `nix run .#grit-apply` alone passes `--fix`. Both find the configured root from the current directory. Telemetry and

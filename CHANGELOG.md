@@ -5,6 +5,11 @@ API.
 
 ## [Unreleased]
 
+### Fixed
+
+- Prevented configured arguments from bypassing checks or changing a profile's declared scope. `gritArgs` now accepts
+  diagnostic-only options, and generated runners reject runtime arguments instead of ignoring them.
+
 ## [0.3.0] - 2026-09-07
 
 ### Changed
