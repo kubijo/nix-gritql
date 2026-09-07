@@ -1,7 +1,7 @@
 {
   lib,
   nix-tools,
-  self,
+  src,
   system,
 }:
 
@@ -13,7 +13,8 @@ nix-tools.lib.configure {
   inherit system;
   inherit (toolPkgs) nodejs;
 
-  src = self;
+  inherit src;
+  treeRootFile = "justfile";
   exclude = [
     "LICENSE"
     "tests/fixtures/patterns/*.grit"

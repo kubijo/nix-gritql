@@ -2,9 +2,18 @@ set default-list
 set positional-arguments
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
-# Run every check.
+# Run public tests and repository QA.
 check:
     nix flake check --quiet
+    nix flake check 'path:.?dir=qa' --quiet
+
+# Format repository files.
+format:
+    nix run 'path:.?dir=qa#format'
+
+# Lint repository files.
+lint:
+    nix run 'path:.?dir=qa#lint'
 
 # Build Grit.
 build:

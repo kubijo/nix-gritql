@@ -1,7 +1,6 @@
 {
   api,
   lib,
-  qualityChecks,
   self,
   system,
   toolPkgs,
@@ -248,9 +247,15 @@ toolPkgs.runCommandLocal "grit-runner-tests"
     ];
   }
   ''
+    echo 'test: public input graph'
+    jq -e '
+      (.nodes.root.inputs | has("nix-tools") | not) and
+      ([.nodes[] |
+        select(.locked.owner? == "kubijo" and .locked.repo? == "nix-tools")
+      ] | length == 0)
+    ' ${../flake.lock} >/dev/null
+
     echo 'test: packaged CLI and license'
-    test -e ${qualityChecks.formatting}
-    test -e ${qualityChecks.linting}
     test -e ${cleanProject.checks.grit}
     test -e ${singleFileProject.checks.grit}
 

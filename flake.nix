@@ -23,8 +23,6 @@
       url = "github:getgrit/web-tree-sitter/9a01e452ec7288851405722e13aca08d9d90b6b1";
       flake = false;
     };
-
-    nix-tools.url = "github:kubijo/nix-tools/v0.3.0";
   };
 
   outputs =
@@ -35,7 +33,6 @@
       tree-sitter-facade-src,
       tree-sitter-gritql-src,
       web-tree-sitter-src,
-      nix-tools,
     }:
     let
       inherit (nixpkgs-pinned) lib;
@@ -71,17 +68,6 @@
           ;
       };
       grit = eachSystem (system: mkGrit { toolPkgs = toolPkgsFor system; });
-      tooling = eachSystem (
-        system:
-        import ./nix/tooling.nix {
-          inherit
-            lib
-            nix-tools
-            self
-            system
-            ;
-        }
-      );
       tests = eachSystem (
         system:
         import ./tests {
@@ -92,7 +78,6 @@
             system
             ;
           toolPkgs = toolPkgsFor system;
-          qualityChecks = tooling.${system}.checks;
         }
       );
       runnable = package: {
@@ -118,14 +103,15 @@
         test = tests.${system};
       });
 
-      formatter = eachSystem (system: tooling.${system}.formatter);
+      formatter = eachSystem (system: (toolPkgsFor system).nixfmt);
 
       devShells = eachSystem (system: {
         default = (toolPkgsFor system).mkShellNoCC {
-          packages = tooling.${system}.packages ++ [
+          packages = [
             grit.${system}
             (toolPkgsFor system).jq
             (toolPkgsFor system).just
+            (toolPkgsFor system).nixfmt
           ];
         };
       });

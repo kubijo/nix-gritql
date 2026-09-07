@@ -1,0 +1,59 @@
+{
+  "nodes": {
+    "nix-tools": {
+      "inputs": {
+        "nixpkgs-pinned": "nixpkgs-pinned"
+      },
+      "locked": {
+        "lastModified": 1788453833,
+        "narHash": "sha256-mf0p+78CT1P73gGy0c6AXtuOG2W91+Bf4BX/LIb9tN4=",
+        "owner": "kubijo",
+        "repo": "nix-tools",
+        "rev": "213cea2835bbc90aab360876aacd8a5759d6fab7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "kubijo",
+        "ref": "v0.3.0",
+        "repo": "nix-tools",
+        "type": "github"
+      }
+    },
+    "nixpkgs-pinned": {
+      "locked": {
+        "lastModified": 1787364730,
+        "narHash": "sha256-NcYt9QJfpJiF1lAyN8BDPB4EeScbPU+EwQqPiBElrpU=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "a831408e6378bc02ebf8cc09b52c96ca86f6bab4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "repository": {
+      "flake": false,
+      "locked": {
+        "path": "..",
+        "type": "path"
+      },
+      "original": {
+        "path": "..",
+        "type": "path"
+      },
+      "parent": []
+    },
+    "root": {
+      "inputs": {
+        "nix-tools": "nix-tools",
+        "repository": "repository"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

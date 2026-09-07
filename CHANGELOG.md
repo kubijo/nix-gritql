@@ -5,6 +5,10 @@ API.
 
 ## [Unreleased]
 
+### Changed
+
+- Moved repository QA powered by `nix-tools` to a separate flake, removing it from the public input graph.
+
 ## [0.2.0] - 2026-09-07
 
 ### Added

@@ -73,5 +73,8 @@ the apply app rewrites explicitly. Profiles default to gated and export `checks.
 Override wrapper packages with `toolPkgs`, the CLI with `gritPackage`, or its build package set with
 `lib.mkGrit { toolPkgs = ...; }`. Wrappers retain only `fd` and GNU coreutils at runtime.
 
+The root `nix fmt` formats Nix files only. Maintainers use `just format`, `just lint`, and `just check` for complete
+repository QA. Those recipes use the separate QA flake, keeping `nix-tools` out of the public input graph.
+
 Repository work is Unlicensed. GritQL remains MIT licensed; parsers and dependencies keep their licenses. See
 [third-party notices](THIRD_PARTY_NOTICES.md) and the tested [`capability matrix`](tests/capabilities.json).
