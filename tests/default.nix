@@ -81,6 +81,14 @@ let
     paths = [ "." ];
     toolPkgs = minimalToolPkgs;
   };
+  discoverySource = fixtureRoot + "/discovery/input";
+  discoveryProject = api.configure {
+    inherit system;
+    src = discoverySource;
+    patterns = patterns + "/javascript.grit";
+    paths = [ "targets with spaces" ];
+    exclude = [ "targets with spaces/excluded.js" ];
+  };
   profileSource = fixtureRoot + "/profiles/input";
   profileProject = api.configureProfiles {
     inherit system toolPkgs;
@@ -274,6 +282,7 @@ toolPkgs.runCommandLocal "grit-runner-tests"
       coreutils
       diffutils
       findutils
+      gitMinimal
       gnugrep
       jq
     ];
@@ -329,6 +338,64 @@ toolPkgs.runCommandLocal "grit-runner-tests"
       ${gritPackage.preparedSrc}/vendor/tree-sitter-gritql
     diff -qr ${gritPackage.vendorSources.web-tree-sitter} \
       ${gritPackage.preparedSrc}/vendor/web-tree-sitter
+
+    echo 'test: deterministic target discovery'
+    work="$TMPDIR/discovery"
+    project="$work/project"
+    consumer_home="$work/home"
+    mkdir -p "$project" "$consumer_home"
+    cp -R ${discoverySource}/. "$project/"
+    chmod -R u+w "$project"
+
+    HOME="$consumer_home" git -C "$project" init -q
+    HOME="$consumer_home" git -C "$project" add .
+    HOME="$consumer_home" git -C "$project" \
+      -c user.name=Fixture -c user.email=fixture@example.invalid \
+      -c commit.gpgsign=false commit -qm initial
+
+    printf 'global.js\n' > "$consumer_home/global-ignore"
+    HOME="$consumer_home" git config --global \
+      core.excludesFile "$consumer_home/global-ignore"
+    printf 'parent.js\n' > "$work/.ignore"
+    printf 'private.js\n' > "$project/.git/info/exclude"
+    printf 'const hidden = legacyJs(5);\n' > "$project/.git/hidden.js"
+
+    for file in global.js parent.js private.js excluded.js; do
+      HOME="$consumer_home" git -C "$project" ls-files --error-unmatch \
+        "targets with spaces/$file" >/dev/null
+    done
+
+    ${lib.getExe toolPkgs.fd} --hidden --no-require-git --type file \
+      --absolute-path --exclude .git . "$project" > "$TMPDIR/ambient-fd.out"
+    for file in global.js parent.js private.js; do
+      ! grep -F "/$file" "$TMPDIR/ambient-fd.out" >/dev/null
+    done
+
+    cd "$project/targets with spaces"
+    before=$(find "$project" -type f -print0 | sort -z | xargs -0 sha256sum)
+    set +e
+    HOME="$consumer_home" ${lib.getExe discoveryProject.packages.grit-check} \
+      > "$TMPDIR/discovery-check.out" 2>&1
+    status=$?
+    set -e
+    test "$status" -ne 0
+    after=$(find "$project" -type f -print0 | sort -z | xargs -0 sha256sum)
+    test "$before" = "$after"
+
+    HOME="$consumer_home" ${lib.getExe discoveryProject.packages.grit-apply} \
+      > "$TMPDIR/discovery-apply.out" 2>&1
+    diff -qr --exclude=.git ${fixtureRoot + "/discovery/golden"} "$project"
+    grep -F 'legacyJs(5)' "$project/.git/hidden.js" >/dev/null
+
+    for file in global.js parent.js private.js; do
+      grep -F "$file" "$TMPDIR/discovery-check.out" >/dev/null
+      grep -F "$file" "$TMPDIR/discovery-apply.out" >/dev/null
+    done
+    ! grep -F 'excluded.js' "$TMPDIR/discovery-check.out" >/dev/null
+    ! grep -F 'excluded.js' "$TMPDIR/discovery-apply.out" >/dev/null
+    ! grep -F '.git/hidden.js' "$TMPDIR/discovery-check.out" >/dev/null
+    ! grep -F '.git/hidden.js' "$TMPDIR/discovery-apply.out" >/dev/null
+    HOME="$consumer_home" ${lib.getExe discoveryProject.packages.grit-check}
 
     echo 'test: named profiles'
     test -e ${profileProject.checks.grit-js-policy}

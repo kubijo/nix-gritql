@@ -209,7 +209,7 @@ rec {
                 selected+=("$file")
                 seen[$file]=1
               fi
-            done < <(fd --hidden --no-require-git --type file --print0 --absolute-path --exclude .git . "$root")
+            done < <(fd --unrestricted --type file --print0 --absolute-path --exclude .git . "$root")
 
             if [[ ''${#selected[@]} -eq 0 ]]; then
               echo "${name}: no files matched the configured paths"
