@@ -53,7 +53,7 @@ let
   customFd = toolPkgs.writeShellApplication {
     name = "fd";
     text = ''
-      : > "''${CUSTOM_FD_MARKER:?}"
+      printf 'fd\n' >> "''${CUSTOM_FD_MARKER:?}"
       root=.
       for argument in "$@"; do
         root=$argument
@@ -78,8 +78,165 @@ let
     paths = [ "." ];
     toolPkgs = minimalToolPkgs;
   };
+  profileSource = fixtureRoot + "/profiles/input";
+  profileProject = api.configureProfiles {
+    inherit system toolPkgs;
+    src = profileSource;
+    profiles = {
+      js-policy = {
+        patterns = patterns + "/javascript.grit";
+        paths = [ "policy one" ];
+        exclude = [ "policy one/excluded.js" ];
+        gate = true;
+      };
+      rust-policy = {
+        patterns = patterns + "/rust.grit";
+        paths = [ "policy two" ];
+        exclude = [ "policy two/excluded.rs" ];
+        gate = true;
+      };
+      rename-js = {
+        patterns = patterns + "/javascript.grit";
+        paths = [ "codemods one" ];
+        exclude = [ "codemods one/excluded.js" ];
+        gate = false;
+      };
+      rename-rust = {
+        patterns = patterns + "/rust.grit";
+        paths = [ "codemods two" ];
+        exclude = [ "codemods two/excluded.rs" ];
+        gate = false;
+      };
+      override-probe = {
+        patterns = patterns + "/javascript.grit";
+        paths = [ "codemods one/change.js" ];
+        gritPackage = profileGrit;
+        gritArgs = {
+          common = [ "--profile-common" ];
+          check = [ "--profile-check" ];
+          apply = [ "--profile-apply" ];
+        };
+        gate = false;
+      };
+    };
+  };
+  profileGrit = toolPkgs.writeShellApplication {
+    name = "grit";
+    text = ''
+      printf '%s\n' "$@" > "''${PROFILE_ARGS_MARKER:?}"
+      echo 'profile diagnostic' >&2
+      exit "''${PROFILE_EXIT_CODE:-37}"
+    '';
+    meta.mainProgram = "grit";
+  };
+  toolSetProfiles = api.configureProfiles {
+    inherit system;
+    src = fixtureRoot + "/clean";
+    toolPkgs = minimalToolPkgs;
+    profiles = {
+      tool-a = {
+        inherit patterns;
+        paths = [ "." ];
+        gritPackage = fakeGrit;
+        gate = false;
+      };
+      tool-b = {
+        inherit patterns;
+        paths = [ "." ];
+        gritPackage = fakeGrit;
+        gate = false;
+      };
+    };
+  };
+  invalidProfileName = builtins.tryEval (
+    builtins.deepSeq (api.configureProfiles {
+      inherit system toolPkgs;
+      src = profileSource;
+      profiles."bad/name" = {
+        inherit patterns;
+      };
+    }) true
+  );
+  sharedProfileOverride = builtins.tryEval (
+    builtins.deepSeq (api.configureProfiles {
+      inherit system toolPkgs;
+      src = profileSource;
+      profiles.bad = {
+        inherit patterns;
+        src = fixtureRoot + "/clean";
+      };
+    }) true
+  );
+  invalidGate = builtins.tryEval (
+    builtins.deepSeq (api.configureProfiles {
+      inherit system toolPkgs;
+      src = profileSource;
+      profiles.bad = {
+        inherit patterns;
+        gate = "yes";
+      };
+    }) true
+  );
+  emptyProfiles = builtins.tryEval (
+    builtins.deepSeq (api.configureProfiles {
+      inherit system toolPkgs;
+      src = profileSource;
+      profiles = { };
+    }) true
+  );
+  invalidProfileValue = builtins.tryEval (
+    builtins.deepSeq (api.configureProfiles {
+      inherit system toolPkgs;
+      src = profileSource;
+      profiles.bad = "not an attribute set";
+    }) true
+  );
+  legacyNames =
+    builtins.attrNames singleFileProject.checks == [ "grit" ]
+    &&
+      builtins.attrNames singleFileProject.apps == [
+        "grit-apply"
+        "grit-check"
+      ]
+    &&
+      builtins.attrNames singleFileProject.packages == [
+        "grit-apply"
+        "grit-check"
+      ];
+  profilePackageNames = builtins.attrNames profileProject.packages;
+  profileNames =
+    builtins.attrNames profileProject.checks == [
+      "grit-js-policy"
+      "grit-rust-policy"
+    ]
+    && builtins.attrNames profileProject.apps == profilePackageNames
+    &&
+      profilePackageNames == [
+        "grit-js-policy-apply"
+        "grit-js-policy-check"
+        "grit-override-probe-apply"
+        "grit-override-probe-check"
+        "grit-rename-js-apply"
+        "grit-rename-js-check"
+        "grit-rename-rust-apply"
+        "grit-rename-rust-check"
+        "grit-rust-policy-apply"
+        "grit-rust-policy-check"
+      ]
+    && lib.all (
+      name:
+      profileProject.apps.${name}.program == lib.getExe profileProject.packages.${name}
+      && profileProject.packages.${name}.name == name
+    ) profilePackageNames;
   closure = toolPkgs.closureInfo { rootPaths = [ gritPackage ]; };
 in
+assert legacyNames;
+assert profileNames;
+assert !invalidProfileName.success;
+assert !sharedProfileOverride.success;
+assert !invalidGate.success;
+assert !emptyProfiles.success;
+assert !invalidProfileValue.success;
 toolPkgs.runCommandLocal "grit-runner-tests"
   {
     nativeBuildInputs = with toolPkgs; [
@@ -136,6 +293,83 @@ toolPkgs.runCommandLocal "grit-runner-tests"
     diff -qr ${gritPackage.vendorSources.web-tree-sitter} \
       ${gritPackage.preparedSrc}/vendor/web-tree-sitter
 
+    echo 'test: named profiles'
+    test -e ${profileProject.checks.grit-js-policy}
+    test -e ${profileProject.checks.grit-rust-policy}
+    cd "${profileSource}/policy one"
+    ${lib.getExe profileProject.packages.grit-js-policy-check}
+    cd "${profileSource}/policy two"
+    ${lib.getExe profileProject.packages.grit-rust-policy-check}
+
+    echo 'test: codemod preview and isolation'
+    work="$TMPDIR/profile"
+    mkdir "$work"
+    cp -R ${profileSource}/. "$work/"
+    chmod -R u+w "$work"
+    before=$(find "$work" -type f -print0 | sort -z | xargs -0 sha256sum)
+    cd "$work/codemods one"
+    set +e
+    ${lib.getExe profileProject.packages.grit-rename-js-check} \
+      >"$TMPDIR/profile-preview.out" 2>&1
+    status=$?
+    set -e
+    if [[ $status -eq 0 ]]; then
+      echo 'expected the codemod preview to find a rewrite' >&2
+      exit 1
+    fi
+    after=$(find "$work" -type f -print0 | sort -z | xargs -0 sha256sum)
+    test "$before" = "$after"
+    diff -qr ${profileSource} "$work"
+
+    ${lib.getExe profileProject.packages.grit-rename-js-apply}
+    diff -qr ${fixtureRoot + "/profiles/after-rename-js"} "$work"
+    ${lib.getExe profileProject.packages.grit-rename-js-check}
+    if ${lib.getExe profileProject.packages.grit-rename-rust-check} \
+      >"$TMPDIR/other-profile.out" 2>&1; then
+      echo 'expected the untouched Rust codemod to find a rewrite' >&2
+      exit 1
+    fi
+    grep -F 'change.rs' "$TMPDIR/other-profile.out" >/dev/null
+    ! grep -F 'excluded.rs' "$TMPDIR/other-profile.out" >/dev/null
+
+    echo 'test: profile arguments and exit codes'
+    export PROFILE_ARGS_MARKER="$TMPDIR/profile-args"
+    cd ${profileSource}
+    set +e
+    PROFILE_EXIT_CODE=37 \
+      ${lib.getExe profileProject.packages.grit-override-probe-check} \
+      >"$TMPDIR/profile-exit.out" 2>&1
+    status=$?
+    set -e
+    test "$status" -eq 37
+    test "$(cat "$TMPDIR/profile-exit.out")" = 'profile diagnostic'
+    grep -Fx -- '--profile-common' "$PROFILE_ARGS_MARKER" >/dev/null
+    grep -Fx -- '--profile-check' "$PROFILE_ARGS_MARKER" >/dev/null
+    ! grep -Fx -- '--profile-apply' "$PROFILE_ARGS_MARKER" >/dev/null
+    ! grep -Fx -- '--fix' "$PROFILE_ARGS_MARKER" >/dev/null
+
+    set +e
+    PROFILE_EXIT_CODE=41 \
+      ${lib.getExe profileProject.packages.grit-override-probe-apply} \
+      >"$TMPDIR/profile-exit.out" 2>&1
+    status=$?
+    set -e
+    test "$status" -eq 41
+    test "$(cat "$TMPDIR/profile-exit.out")" = 'profile diagnostic'
+    grep -Fx -- '--profile-common' "$PROFILE_ARGS_MARKER" >/dev/null
+    grep -Fx -- '--profile-apply' "$PROFILE_ARGS_MARKER" >/dev/null
+    grep -Fx -- '--fix' "$PROFILE_ARGS_MARKER" >/dev/null
+    ! grep -Fx -- '--profile-check' "$PROFILE_ARGS_MARKER" >/dev/null
+
+    echo 'test: shared profile tool set'
+    export FAKE_GRIT_MARKER="$TMPDIR/fake-grit"
+    export CUSTOM_FD_MARKER="$TMPDIR/profile-fd"
+    : > "$CUSTOM_FD_MARKER"
+    cd ${fixtureRoot + "/clean"}
+    ${lib.getExe toolSetProfiles.packages.grit-tool-a-check}
+    ${lib.getExe toolSetProfiles.packages.grit-tool-b-check}
+    test "$(grep -c '^fd$' "$CUSTOM_FD_MARKER")" -eq 2
+
     echo 'test: read-only violation check'
     work="$TMPDIR/read-only"
     mkdir "$work"
@@ -183,7 +417,6 @@ toolPkgs.runCommandLocal "grit-runner-tests"
     ${lib.getExe violationProject.packages.grit-check}
 
     echo 'test: package and tool-set overrides'
-    export FAKE_GRIT_MARKER="$TMPDIR/fake-grit"
     cd ${fixtureRoot + "/clean"}
     ${lib.getExe overriddenProject.packages.grit-check}
     test -e "$FAKE_GRIT_MARKER"

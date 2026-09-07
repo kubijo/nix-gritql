@@ -5,6 +5,13 @@ API.
 
 ## [Unreleased]
 
+### Added
+
+- Named, isolated Grit profiles through `lib.configureProfiles`, with shared source and tool-set configuration.
+- Per-profile patterns, paths, exclusions, arguments, and Grit package overrides.
+- Read-only and explicit apply apps and packages for every profile. Gated profiles also export checks.
+- Full compatibility with the existing `lib.configure` API and output names.
+
 ## [0.1.0] - 2026-09-06
 
 ### Added

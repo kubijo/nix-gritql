@@ -47,6 +47,29 @@ paths or globs. Extra arguments use `gritArgs.common`, `.check`, and `.apply` li
 `nix run .#grit-apply` alone passes `--fix`. Both find the configured root from the current directory. Telemetry and
 caching are disabled.
 
+Use named profiles when policies and codemods need separate scopes:
+
+```nix
+grit-runner.lib.configureProfiles {
+  inherit system src toolPkgs;
+  profiles = {
+    policy = {
+      patterns = ./.config/grit/policy;
+      paths = [ "crates" ];
+      gate = true;
+    };
+    rename-widget-api = {
+      patterns = ./.config/grit/codemods/rename-widget-api;
+      paths = [ "widgets" ];
+      gate = false;
+    };
+  };
+}
+```
+
+Every profile exports `grit-NAME-check` and `grit-NAME-apply` apps and packages. The check app previews without writing;
+the apply app rewrites explicitly. Profiles default to gated and export `checks.grit-NAME`; `gate = false` omits it.
+
 Override wrapper packages with `toolPkgs`, the CLI with `gritPackage`, or its build package set with
 `lib.mkGrit { toolPkgs = ...; }`. Wrappers retain only `fd` and GNU coreutils at runtime.
 

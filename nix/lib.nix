@@ -21,7 +21,7 @@ let
     program = lib.getExe package;
   };
 in
-{
+rec {
   inherit mkGrit;
 
   configure =
@@ -270,5 +270,95 @@ in
         grit-check = checkRunner;
         grit-apply = applyRunner;
       };
+    };
+
+  configureProfiles =
+    {
+      system,
+      src,
+      profiles,
+      toolPkgs ? toolPkgsFor system,
+    }:
+    let
+      profileNames = if lib.isAttrs profiles then builtins.attrNames profiles else [ ];
+      validProfileName =
+        name:
+        builtins.stringLength name <= 64 && builtins.match "^[a-z]([a-z0-9-]*[a-z0-9])?$" name != null;
+      namedRunner =
+        name: package:
+        toolPkgs.writeShellApplication {
+          inherit name;
+          text = ''
+            exec ${lib.getExe package} "$@"
+          '';
+          meta = {
+            license = lib.licenses.unlicense;
+            mainProgram = name;
+          };
+        };
+      configuredProfiles = lib.mapAttrs (
+        name: profile:
+        if !lib.isAttrs profile then
+          throw "profile `${name}` must be an attribute set"
+        else
+          let
+            forbidden = lib.filter (option: builtins.hasAttr option profile) [
+              "src"
+              "system"
+              "toolPkgs"
+            ];
+            gate = profile.gate or true;
+            configured = configure (
+              builtins.removeAttrs profile [ "gate" ]
+              // {
+                inherit
+                  src
+                  system
+                  toolPkgs
+                  ;
+              }
+            );
+            checkName = "grit-${name}-check";
+            applyName = "grit-${name}-apply";
+          in
+          assert lib.assertMsg (
+            forbidden == [ ]
+          ) "profile `${name}` cannot override shared options: ${lib.concatStringsSep ", " forbidden}";
+          assert lib.assertMsg (lib.isBool gate) "profile `${name}` gate must be a Boolean";
+          {
+            inherit gate;
+            check = configured.checks.grit;
+            checkPackage = namedRunner checkName configured.packages.grit-check;
+            applyPackage = namedRunner applyName configured.packages.grit-apply;
+          }
+      ) profiles;
+      merge =
+        select:
+        lib.foldl' (result: name: result // select name configuredProfiles.${name}) { } profileNames;
+    in
+    assert lib.assertMsg (
+      lib.isAttrs profiles && profileNames != [ ]
+    ) "profiles must be a non-empty attribute set";
+    assert lib.assertMsg (lib.all validProfileName profileNames)
+      "profile names must match ^[a-z]([a-z0-9-]*[a-z0-9])?$ and contain at most 64 characters";
+    {
+      checks = merge (
+        name: profile:
+        lib.optionalAttrs profile.gate {
+          "grit-${name}" = profile.check;
+        }
+      );
+      apps = merge (
+        name: profile: {
+          "grit-${name}-check" = runnable profile.checkPackage;
+          "grit-${name}-apply" = runnable profile.applyPackage;
+        }
+      );
+      packages = merge (
+        name: profile: {
+          "grit-${name}-check" = profile.checkPackage;
+          "grit-${name}-apply" = profile.applyPackage;
+        }
+      );
     };
 }
