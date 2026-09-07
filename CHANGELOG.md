@@ -5,6 +5,8 @@ API.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-07
+
 ### Added
 
 - Named, isolated Grit profiles through `lib.configureProfiles`, with shared source and tool-set configuration.
