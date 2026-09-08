@@ -2,7 +2,7 @@ set default-list
 set positional-arguments
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
-# Run public tests and repository QA.
+# Run package and repository QA checks.
 check:
     nix flake check --quiet
     nix flake check 'path:.?dir=qa' --quiet
