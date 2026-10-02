@@ -1,6 +1,6 @@
 {
   version = "0.0.3";
-  tag = "grit-cli-v0.0.3-1";
+  tag = "grit-cli-v0.6.0-candidate-37026891287-1";
   sourceRev = "dbe8faba29a3a7008805aa431534742070002933";
   hashes = {
     x86_64-linux = "sha256-/1efHj4Wat0TWHdD9P4KRuQzJGt4PKj45IlmZJkrN4E=";
