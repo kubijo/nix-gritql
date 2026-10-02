@@ -1,0 +1,40 @@
+name: Build Grit CLI artifacts
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    name: ${{ matrix.system }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            system: x86_64-linux
+          - runner: ubuntu-24.04-arm
+            system: aarch64-linux
+          - runner: macos-15
+            system: aarch64-darwin
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: cachix/install-nix-action@v31.11.1
+        with:
+          extra_nix_config: sandbox = true
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
+        with:
+          use-gha-cache: enabled
+          use-flakehub: disabled
+      - name: Build from source and verify the local archive
+        shell: bash
+        run: bash scripts/build-artifact.sh "${{ matrix.system }}"
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: grit-${{ matrix.system }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
