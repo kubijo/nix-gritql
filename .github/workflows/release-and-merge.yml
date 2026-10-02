@@ -1,0 +1,42 @@
+name: Release and merge
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Green release pull request number
+        required: true
+        type: number
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-and-merge
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require the main workflow definition
+        env:
+          GIT_REF: ${{ github.ref }}
+        run: test "$GIT_REF" = refs/heads/main
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          token: ${{ github.token }}
+      - uses: cachix/install-nix-action@v31.11.1
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
+        with:
+          use-gha-cache: enabled
+          use-flakehub: disabled
+      - name: Verify, merge, and publish the tested release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+        shell: bash
+        run: bash scripts/release-and-merge.sh "$PR_NUMBER"

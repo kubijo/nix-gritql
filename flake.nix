@@ -63,12 +63,15 @@
         in
         if !lib.elem system supportedSystems then
           throw "grit: unsupported platform ${system}; supported platforms are ${lib.concatStringsSep ", " supportedSystems}"
-        else if !artifactRelease.enabled || artifact == null then
+        else if artifactRelease.sourceRev != gritql-src.rev then
+          throw "grit: prebuilt artifact source revision ${artifactRelease.sourceRev} does not match pinned Grit source ${gritql-src.rev}; select the source build with lib.mkGrit { inherit toolPkgs; fromSource = true; }"
+        else if artifact == null then
           throw "grit: no published prebuilt artifact for ${system}; select the source build with lib.mkGrit { inherit toolPkgs; fromSource = true; }"
         else
           toolPkgs.callPackage ./nix/grit-prebuilt.nix {
             expectedSystem = system;
-            expectedSourceRev = gritql-src.rev;
+            expectedSourceRev = artifactRelease.sourceRev;
+            expectedVersion = artifactRelease.version;
             archive = toolPkgs.fetchurl {
               url = "https://github.com/kubijo/nix-gritql/releases/download/${artifactRelease.tag}/grit-${artifactRelease.version}-${system}.tar.gz";
               hash = artifact;
@@ -84,7 +87,7 @@
         in
         if !lib.elem system supportedSystems then
           throw "grit: unsupported platform ${system}; supported platforms are ${lib.concatStringsSep ", " supportedSystems}"
-        else if fromSource || !artifactRelease.enabled then
+        else if fromSource then
           sourceFor toolPkgs
         else
           mkGritPrebuilt { inherit toolPkgs; };
@@ -112,6 +115,7 @@
           archive = gritArtifact.${system};
           expectedSystem = system;
           expectedSourceRev = gritql-src.rev;
+          expectedVersion = gritSource.${system}.version;
         }
       );
       gritEquivalence =
@@ -158,7 +162,7 @@
           build = grit.${system};
           equivalence = gritEquivalence system "grit-equivalence" gritLocalPrebuilt.${system};
         }
-        // lib.optionalAttrs artifactRelease.enabled {
+        // lib.optionalAttrs (artifactRelease.sourceRev == gritql-src.rev) {
           published-equivalence = gritEquivalence system "grit-published-equivalence" grit.${system};
         }
       );
