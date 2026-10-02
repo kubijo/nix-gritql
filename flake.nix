@@ -114,6 +114,21 @@
           expectedSourceRev = gritql-src.rev;
         }
       );
+      gritEquivalence =
+        system: name: prebuilt:
+        (toolPkgsFor system).runCommand name
+          {
+            nativeBuildInputs = [
+              gritSource.${system}
+              prebuilt
+            ];
+          }
+          ''
+            bash ${./tests/cli-equivalence.sh} \
+              ${lib.getExe gritSource.${system}} \
+              ${lib.getExe prebuilt}
+            touch "$out"
+          '';
       runnable = package: {
         type = "app";
         program = lib.getExe package;
@@ -137,23 +152,16 @@
         grit = runnable grit.${system};
       });
 
-      checks = eachSystem (system: {
-        build = grit.${system};
-        equivalence =
-          (toolPkgsFor system).runCommand "grit-equivalence"
-            {
-              nativeBuildInputs = [
-                gritSource.${system}
-                gritLocalPrebuilt.${system}
-              ];
-            }
-            ''
-              bash ${./tests/cli-equivalence.sh} \
-                ${lib.getExe gritSource.${system}} \
-                ${lib.getExe gritLocalPrebuilt.${system}}
-              touch "$out"
-            '';
-      });
+      checks = eachSystem (
+        system:
+        {
+          build = grit.${system};
+          equivalence = gritEquivalence system "grit-equivalence" gritLocalPrebuilt.${system};
+        }
+        // lib.optionalAttrs artifactRelease.enabled {
+          published-equivalence = gritEquivalence system "grit-published-equivalence" grit.${system};
+        }
+      );
 
       formatter = eachSystem (system: (toolPkgsFor system).nixfmt);
 
