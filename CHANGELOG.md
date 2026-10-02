@@ -4,6 +4,8 @@ Notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-02
+
 ### Added
 
 - Prepared native CLI release artifacts, fixed-output packaging, and source/prebuilt equivalence checks.
