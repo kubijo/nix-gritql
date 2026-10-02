@@ -37,6 +37,7 @@ jobs:
       - run: nix flake check -L --keep-going --no-update-lock-file
       - run: nix flake check -L --keep-going --no-update-lock-file 'path:.?dir=qa'
       - run: nix build -L .#grit --no-update-lock-file
+      - run: nix build -L --offline .#grit --no-update-lock-file
       - run: nix run .#grit --no-update-lock-file -- --version
       - name: Verify installed runtime closure
         run: |

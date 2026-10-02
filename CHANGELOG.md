@@ -8,6 +8,10 @@ Notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Prepared native CLI release artifacts, fixed-output packaging, and source/prebuilt equivalence checks.
 
+### Changed
+
+- Use published CLI archives by default on supported platforms.
+
 ## [0.5.0] - 2026-09-08
 
 ### Changed
