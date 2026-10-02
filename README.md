@@ -30,8 +30,17 @@ Use a shared package set:
 }
 ```
 
-The flake exports `packages.<system>.default`, `packages.<system>.grit`, `apps.<system>.default`, `apps.<system>.grit`,
-`checks.<system>.build`, `formatter.<system>`, `devShells.<system>.default`, and `lib.mkGrit`.
+The flake exports `packages.<system>.default`, `packages.<system>.grit`, `packages.<system>.grit-source`,
+`apps.<system>.default`, `apps.<system>.grit`, `checks.<system>.build`, `checks.<system>.equivalence`,
+`formatter.<system>`, `devShells.<system>.default`, and `lib.mkGrit`. Select the source build with
+`lib.mkGrit { inherit toolPkgs; fromSource = true; }` or `packages.<system>.grit-source`.
+
+Prebuilt CLI archives are staged for x86_64 Linux, aarch64 Linux, and aarch64 Darwin. Until their GitHub Release assets
+and hashes are committed in `nix/artifacts.nix`, the normal package remains source-built. To bootstrap, run the manual
+**Build Grit CLI artifacts** workflow on the intended commit and review its native equivalence and closure checks. Run
+**Publish Grit CLI artifacts** with that successful build run ID to publish the exact tested archives. Download each
+release asset, record its `nix hash file --sri` value in `nix/artifacts.nix`, set `enabled = true`, and run all three
+native CI jobs before updating consumers. Artifact production always selects the source package explicitly.
 
 `nix fmt` formats Nix files. Maintainers run `just format`, `just lint`, `just check`, `just build`, and `just smoke`.
 

@@ -1,0 +1,26 @@
+name: Publish Grit CLI artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: Successful Build Grit CLI artifacts run ID
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: cachix/install-nix-action@v31.11.1
+      - name: Verify and publish the exact tested archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_RUN_ID: ${{ inputs.build_run_id }}
+        shell: bash
+        run: bash scripts/publish-artifacts.sh "$BUILD_RUN_ID"

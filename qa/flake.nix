@@ -7,7 +7,7 @@
       flake = false;
     };
 
-    nix-tools.url = "github:kubijo/nix-tools/v0.3.0";
+    nix-tools.url = "github:kubijo/nix-tools/v0.6.0";
   };
 
   outputs =
