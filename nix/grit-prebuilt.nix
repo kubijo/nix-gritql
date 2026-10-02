@@ -9,11 +9,12 @@
   archive,
   expectedSystem,
   expectedSourceRev,
+  expectedVersion,
 }:
 
 stdenv.mkDerivation {
   pname = "grit";
-  version = "0.0.3";
+  version = expectedVersion;
   src = archive;
 
   dontConfigure = true;
@@ -42,7 +43,8 @@ stdenv.mkDerivation {
     jq -e \
       --arg system '${expectedSystem}' \
       --arg rev '${expectedSourceRev}' \
-      '.format == 1 and .gritVersion == "0.0.3" and .system == $system and .sourceRev == $rev' \
+      --arg version '${expectedVersion}' \
+      '.format == 1 and .gritVersion == $version and .system == $system and .sourceRev == $rev' \
       metadata.json > /dev/null
     install -Dm755 bin/grit "$out/bin/grit"
     install -Dm644 share/licenses/grit/LICENSE "$out/share/licenses/grit/LICENSE"

@@ -8,15 +8,16 @@
 
 let
   inherit (builtins) toJSON;
+  inherit (source) version;
   metadata = toJSON {
     format = 1;
-    gritVersion = "0.0.3";
+    gritVersion = version;
     inherit sourceRev nixpkgsRev system;
     rustc = pkgs.rustc.version;
     cargo = pkgs.cargo.version;
   };
 in
-pkgs.runCommand "grit-0.0.3-${system}.tar.gz"
+pkgs.runCommand "grit-${version}-${system}.tar.gz"
   {
     nativeBuildInputs = [
       pkgs.gnutar

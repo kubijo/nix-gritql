@@ -11,6 +11,7 @@ Notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - Use published CLI archives by default on supported platforms.
+- Choose repository release versions in `VERSION` and publish retryable native artifacts from green pull requests.
 
 ## [0.5.0] - 2026-09-08
 

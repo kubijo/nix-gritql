@@ -15,12 +15,16 @@ nix-tools.lib.configure {
 
   inherit src;
   treeRootFile = "justfile";
-  exclude = [ "LICENSE" ];
+  exclude = [
+    "LICENSE"
+    "VERSION"
+  ];
 
   format = {
     justfile = true;
     markdown = true;
     nix = true;
+    python = true;
     yaml = true;
   };
 
@@ -30,6 +34,7 @@ nix-tools.lib.configure {
       ignoreLinks = [ "^https?://" ];
     };
     nix = true;
+    python = true;
     workflows = true;
     yaml = true;
   };

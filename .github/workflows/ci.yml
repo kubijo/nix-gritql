@@ -5,6 +5,19 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      release_pr:
+        description: Pull request number for a hash-pin verification run
+        required: false
+        type: string
+      candidate_head:
+        description: Expected pull request head commit
+        required: false
+        type: string
+      candidate_base:
+        description: Expected main commit
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -29,27 +42,44 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.release_pr && format('refs/pull/{0}/merge', inputs.release_pr) || github.ref }}
       - uses: cachix/install-nix-action@v31.11.1
       - uses: DeterminateSystems/magic-nix-cache-action@v15
         with:
           use-gha-cache: enabled
           use-flakehub: disabled
-      - run: nix flake check -L --keep-going --no-update-lock-file
-      - run: nix flake check -L --keep-going --no-update-lock-file 'path:.?dir=qa'
-      - run: nix build -L .#grit --no-update-lock-file
-      - run: nix build -L --offline .#grit --no-update-lock-file
-      - run: nix run .#grit --no-update-lock-file -- --version
-      - name: Verify installed runtime closure
-        run: |
-          set -euo pipefail
-          package=$(nix build .#grit --no-update-lock-file --no-link --print-out-paths)
-          nix-store -q --requisites "$package" |
-            while IFS= read -r path; do test -e "$path"; done
+      - name: Check package and build candidate CLI archive
+        env:
+          SYSTEM: ${{ matrix.system }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || inputs.candidate_head }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.candidate_base }}
+        run: python3 scripts/pipeline.py native --system "$SYSTEM"
+      - uses: actions/upload-artifact@v7.0.1
+        if: github.event_name == 'pull_request' || inputs.release_pr != ''
+        with:
+          name: grit-${{ matrix.system }}-${{ github.run_attempt }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+  release-candidate:
+    if: github.event_name == 'pull_request' || inputs.release_pr != ''
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.release_pr && format('refs/pull/{0}/merge', inputs.release_pr) || github.ref }}
+      - name: Check chosen release version
+        env:
+          BASE_REF: ${{ github.base_ref || 'main' }}
+        run: python3 scripts/pipeline.py release-candidate --base-ref "$BASE_REF"
 
   evaluate:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: cachix/install-nix-action@v31.11.1
-      - run: nix flake show --all-systems --no-update-lock-file
-      - run: nix flake show --all-systems --no-update-lock-file 'path:.?dir=qa'
+      - run: python3 scripts/pipeline.py evaluate
