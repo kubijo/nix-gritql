@@ -15,6 +15,10 @@ Notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Refreshed pinned nixpkgs, used by the source build.
 - Moved repository QA to nix-tools v0.11.0 and bumped workflow actions.
 
+### Fixed
+
+- Made the macOS build reproducible by remapping the random Nix build directory out of the binary.
+
 ## [0.6.0] - 2026-10-02
 
 ### Added
