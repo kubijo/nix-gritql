@@ -45,7 +45,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ inputs.release_pr && format('refs/pull/{0}/merge', inputs.release_pr) || github.ref }}
-      - uses: cachix/install-nix-action@v31.11.1
+      - uses: cachix/install-nix-action@v31.11.3
       - uses: DeterminateSystems/magic-nix-cache-action@v15
         with:
           use-gha-cache: enabled
@@ -56,7 +56,7 @@ jobs:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || inputs.candidate_head }}
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.candidate_base }}
         run: python3 scripts/pipeline.py native --system "$SYSTEM"
-      - uses: actions/upload-artifact@v7.0.1
+      - uses: actions/upload-artifact@v7.0.2
         if: github.event_name == 'pull_request' || inputs.release_pr != ''
         with:
           name: grit-${{ matrix.system }}-${{ github.run_attempt }}
@@ -81,5 +81,5 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: cachix/install-nix-action@v31.11.1
+      - uses: cachix/install-nix-action@v31.11.3
       - run: python3 scripts/pipeline.py evaluate
