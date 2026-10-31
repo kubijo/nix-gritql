@@ -6,6 +6,7 @@
   zlib,
   stdenv,
   libiconv,
+  openssl,
   gritql-src,
   tree-sitter-facade-src,
   tree-sitter-gritql-src,
@@ -33,6 +34,7 @@ let
       runHook postInstall
     '';
   };
+  opensslStatic = openssl.override { static = true; };
 in
 rustPlatform.buildRustPackage {
   pname = "grit";
@@ -48,11 +50,19 @@ rustPlatform.buildRustPackage {
   auditable = false;
   doCheck = false;
 
-  # Darwin builds in a random /nix/var/nix/builds/nix-<pid>-<n>, which rustc embeds in panic locations;
-  # release v0.7.0 failed its byte comparison on it. Linux already builds under /build.
+  # Darwin builds in a random /nix/var/nix/builds/nix-<pid>-<n>, and release v0.7.0 failed
+  # its byte comparison on it; Linux already builds under /build.
+  # rustc embeds the directory in panic locations,
+  # and vendored OpenSSL bakes its install prefix into the engines and modules paths.
   preBuild = ''
     export RUSTFLAGS="''${RUSTFLAGS:-} --remap-path-prefix=$NIX_BUILD_TOP=/build"
   '';
+  env = {
+    OPENSSL_NO_VENDOR = "1";
+    OPENSSL_STATIC = "1";
+    OPENSSL_LIB_DIR = "${lib.getLib opensslStatic}/lib";
+    OPENSSL_INCLUDE_DIR = "${lib.getDev opensslStatic}/include";
+  };
 
   nativeBuildInputs = [
     perl
