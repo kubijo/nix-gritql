@@ -54,8 +54,14 @@ rustPlatform.buildRustPackage {
   # its byte comparison on it; Linux already builds under /build.
   # rustc embeds the directory in panic locations,
   # and vendored OpenSSL bakes its install prefix into the engines and modules paths.
+  # The v0.7.0 darwin rebuild then differed only in LC_UUID:
+  # ld64 hashes debug-map stabs naming build-dir objects into it before fixup strips them,
+  # so -S keeps them out of the output.
   preBuild = ''
     export RUSTFLAGS="''${RUSTFLAGS:-} --remap-path-prefix=$NIX_BUILD_TOP=/build"
+  ''
+  + lib.optionalString stdenv.hostPlatform.isDarwin ''
+    export RUSTFLAGS="$RUSTFLAGS -C link-arg=-Wl,-S"
   '';
   env = {
     OPENSSL_NO_VENDOR = "1";
