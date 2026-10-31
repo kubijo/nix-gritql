@@ -17,8 +17,8 @@ Notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- Made the macOS build reproducible by remapping the random Nix build directory out of the binary and statically linking
-  nixpkgs OpenSSL instead of the vendored build.
+- Made the macOS build reproducible by remapping the random Nix build directory out of the binary, statically linking
+  nixpkgs OpenSSL instead of the vendored build, and keeping debug stabs out of the linked binary.
 
 ## [0.6.0] - 2026-10-02
 
