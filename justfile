@@ -15,6 +15,11 @@ format:
 lint:
     nix run 'path:.?dir=qa#lint'
 
+# Report outdated flake inputs and workflow actions; online, outside `check`.
+[no-exit-message]
+outdated *args:
+    nix run 'path:.?dir=qa#outdated' -- "$@"
+
 # Build Grit.
 build:
     nix build .#grit

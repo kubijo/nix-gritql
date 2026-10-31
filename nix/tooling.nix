@@ -38,4 +38,12 @@ nix-tools.lib.configure {
     workflows = true;
     yaml = true;
   };
+
+  outdated = {
+    githubActions = true;
+    nix.projects = {
+      default.root = ".";
+      qa.root = "qa";
+    };
+  };
 }
