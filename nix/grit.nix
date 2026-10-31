@@ -48,6 +48,12 @@ rustPlatform.buildRustPackage {
   auditable = false;
   doCheck = false;
 
+  # Darwin builds in a random /nix/var/nix/builds/nix-<pid>-<n>, which rustc embeds in panic locations;
+  # release v0.7.0 failed its byte comparison on it. Linux already builds under /build.
+  preBuild = ''
+    export RUSTFLAGS="''${RUSTFLAGS:-} --remap-path-prefix=$NIX_BUILD_TOP=/build"
+  '';
+
   nativeBuildInputs = [
     perl
     pkg-config
